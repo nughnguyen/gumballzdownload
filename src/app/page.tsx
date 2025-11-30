@@ -520,7 +520,7 @@ export default function MediaDownloader() {
                       <div className="flex-shrink-0 bg-white p-4 rounded-2xl shadow-lg border border-slate-100">
                         {/* Dynamic QR Code */}
                         <img 
-                          src={`https://img.vietqr.io/image/OCB-0388205003-compact2.png?amount=${donateAmount}&addInfo=${encodeURIComponent(donateMessage)}&accountName=NGUYEN%20QUOC%20HUNG`}
+                          src={`https://img.vietqr.io/image/OCB-0388205003-compact.png?amount=${donateAmount}&addInfo=${encodeURIComponent(donateMessage)}&accountName=NGUYEN%20QUOC%20HUNG`}
                           alt="VietQR"
                           className="w-48 h-48 rounded-lg"
                         />
@@ -590,7 +590,7 @@ export default function MediaDownloader() {
                     <h3 className="text-2xl font-bold mb-2">{t.donate.recurring}</h3>
                     <p className="text-pink-100 mb-6">Become a sponsor and support development.</p>
                     <Button className="w-full bg-white text-pink-600 hover:bg-pink-50 border-0 h-12 font-bold shadow-lg" asChild>
-                      <a href="https://zypage.com" target="_blank" rel="noopener noreferrer">
+                      <a href="https://zypage.com/gumballz" target="_blank" rel="noopener noreferrer">
                         <Heart className="mr-2 h-5 w-5 fill-pink-600" />
                         {t.donate.zypage}
                       </a>
@@ -703,14 +703,14 @@ export default function MediaDownloader() {
             </div>
             
             <div className="flex items-center gap-8">
-              <a href="#" className="text-slate-400 hover:text-blue-600 hover:scale-110 transition-all duration-300"><Facebook className="h-6 w-6" /></a>
-              <a href="#" className="text-slate-400 hover:text-pink-600 hover:scale-110 transition-all duration-300"><Instagram className="h-6 w-6" /></a>
-              <a href="#" className="text-slate-400 hover:text-red-600 hover:scale-110 transition-all duration-300"><Youtube className="h-6 w-6" /></a>
-              <a href="#" className="text-slate-400 hover:text-indigo-500 hover:scale-110 transition-all duration-300"><Gamepad2 className="h-6 w-6" /></a>
+              <a href="https://www.facebook.com/hungnq188.2k5" target="_blank" className="text-slate-400 hover:text-blue-600 hover:scale-110 transition-all duration-300"><Facebook className="h-6 w-6" /></a>
+              <a href="https://www.instagram.com/nq.hnug" target="_blank" className="text-slate-400 hover:text-pink-600 hover:scale-110 transition-all duration-300"><Instagram className="h-6 w-6" /></a>
+              <a href="https://www.youtube.com/@nughnguyen" target="_blank" className="text-slate-400 hover:text-red-600 hover:scale-110 transition-all duration-300"><Youtube className="h-6 w-6" /></a>
+              <a href="https://dsc.gg/thenoicez" target="_blank" className="text-slate-400 hover:text-indigo-500 hover:scale-110 transition-all duration-300"><Gamepad2 className="h-6 w-6" /></a>
             </div>
 
             <div className="flex items-center gap-2 text-sm font-bold animate-rainbow bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500">
-              Powered by Nguyen Quoc Hung
+              <span className="text-slate-400"  >Powered by </span>Nguyen Quoc Hung
             </div>
           </div>
         </div>
