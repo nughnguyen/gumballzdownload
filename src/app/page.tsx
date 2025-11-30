@@ -27,6 +27,7 @@ interface DownloadOption {
   selectedQuality: string;
   format: string;
   size: string;
+  url?: string;
 }
 
 interface QueueItem {
@@ -64,7 +65,8 @@ export default function MediaDownloader() {
     disableMetadata: false,
     tunneling: false,
     noAnalytics: false,
-    debug: false
+    debug: false,
+    cobaltApiUrl: "https://cobalt.api.wuk.sh"
   });
 
   // Load settings from localStorage
@@ -123,45 +125,143 @@ export default function MediaDownloader() {
     }
   };
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!input) return;
     setStatus("analyzing");
-    
-    // Mock analysis
-    setTimeout(() => {
+    setDownloadOptions([]);
+
+    try {
+      const response = await fetch('/api/cobalt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: input,
+          videoQuality: settings.videoQuality,
+          audioFormat: settings.audioFormat,
+          filenameStyle: settings.filenameStyle,
+          videoCodec: settings.videoCodec,
+          tiktokSound: settings.tiktokSound,
+          cobaltApiUrl: settings.cobaltApiUrl
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.status === 'error') {
+        setStatus("error");
+        toast.error(data.text || "Analysis failed");
+        return;
+      }
+
+      const options: DownloadOption[] = [];
+
+      if (data.status === 'stream' || data.status === 'redirect') {
+        options.push({
+          type: 'video',
+          title: 'Download Media',
+          qualities: ['Max'], 
+          selectedQuality: 'Max',
+          format: 'MP4', // Simplified, ideally check data
+          size: 'Unknown',
+          url: data.url
+        });
+      } else if (data.status === 'picker') {
+        data.picker.forEach((item: any) => {
+           options.push({
+             type: item.type === 'video' ? 'video' : 'audio', // Simplified mapping
+             title: 'Media Option',
+             qualities: ['Max'],
+             selectedQuality: 'Max',
+             format: 'MP4',
+             size: 'Unknown',
+             url: item.url
+           });
+        });
+      }
+
+      // If we got a single video result, let's manually add an Audio option
+      // This allows the user to "download audio" which will trigger a new fetch with downloadMode='audio'
+      if (options.length > 0 && options[0].type === 'video') {
+         options.push({
+           type: 'audio',
+           title: 'Audio Only',
+           qualities: ['Best'],
+           selectedQuality: 'Best',
+           format: 'MP3',
+           size: 'Unknown',
+           // No URL yet, handleDownload will need to fetch it
+         });
+      }
+      
+      // If no options found (e.g. success but no url?), fallback or show error
+      if (options.length === 0 && data.url) {
+         options.push({
+          type: 'video',
+          title: 'Download Media',
+          qualities: ['Max'], 
+          selectedQuality: 'Max',
+          format: 'MP4',
+          size: 'Unknown',
+          url: data.url
+        });
+      }
+
+      setDownloadOptions(options);
       setStatus("idle");
-      setDownloadOptions([
-        { 
-          type: "video", 
-          title: "Video Download",
-          qualities: ["1080p", "720p", "480p", "360p"],
-          selectedQuality: "1080p",
-          format: "MP4", 
-          size: "~125 MB" 
-        },
-        { 
-          type: "audio", 
-          title: "Audio Extract",
-          qualities: ["320kbps", "192kbps", "128kbps"],
-          selectedQuality: "320kbps",
-          format: "MP3", 
-          size: "~8 MB" 
-        },
-        { 
-          type: "image", 
-          title: "Cover Art",
-          qualities: ["Original", "Large", "Medium"],
-          selectedQuality: "Original",
-          format: "JPG", 
-          size: "~2 MB" 
-        },
-      ]);
-    }, 1500);
+
+    } catch (error) {
+      console.error("Analysis error:", error);
+      setStatus("error");
+      toast.error("Failed to connect to server");
+    }
   };
 
-  const handleDownload = (option: DownloadOption) => {
+  const handleDownload = async (option: DownloadOption) => {
+    // If we have a URL, just open it
+    if (option.url) {
+      window.open(option.url, '_blank');
+      toast.success("Download started!");
+      return;
+    }
+
+    // If no URL (e.g. the manual Audio option), we need to fetch it
+    if (option.type === 'audio' && !option.url) {
+       setStatus("downloading");
+       toast.info("Processing audio...");
+       
+       try {
+         const response = await fetch('/api/cobalt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              url: input,
+              audioFormat: settings.audioFormat,
+              downloadMode: 'audio', // Force audio mode
+              filenameStyle: settings.filenameStyle,
+              cobaltApiUrl: settings.cobaltApiUrl
+            })
+         });
+         
+         const data = await response.json();
+         
+         if (data.url) {
+            window.open(data.url, '_blank');
+            setStatus("completed");
+            toast.success("Audio download started!");
+         } else {
+            setStatus("error");
+            toast.error("Failed to generate audio link");
+         }
+       } catch (e) {
+         setStatus("error");
+         toast.error("Error processing audio");
+       }
+       return;
+    }
+
     setStatus("downloading");
     setProgress(0);
+    // ... existing queue logic ...
 
     const newItem: QueueItem = {
       id: Date.now().toString(),
@@ -191,21 +291,28 @@ export default function MediaDownloader() {
 
   const handleDownloadQR = () => {
     const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.src = `https://img.vietqr.io/image/OCB-0388205003-compact2.png?amount=${donateAmount}&addInfo=${encodeURIComponent(donateMessage)}&accountName=NGUYEN%20QUOC%20HUNG`;
+    
     img.onload = () => {
       canvas.width = img.width;
       canvas.height = img.height;
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.drawImage(img, 0, 0);
-        const a = document.createElement("a");
-        a.href = canvas.toDataURL("image/png");
-        a.download = "gumballz-donate-qr.png";
-        a.click();
-        toast.success("QR Code downloaded!");
-      }
+      ctx?.drawImage(img, 0, 0);
+      const dataUrl = canvas.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = "gumballz-donate-qr.png";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      toast.success("QR Code downloaded!");
+    };
+    
+    img.onerror = () => {
+      console.error("Failed to load QR image for download");
+      toast.error("Failed to download QR Code");
     };
   };
 

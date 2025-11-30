@@ -61,7 +61,7 @@ export function SettingsView({
           {activeTab === "audio" && <SettingsAudio t={t} settings={settings} setSettings={setSettings} />}
           {activeTab === "metadata" && <SettingsMetadata t={t} settings={settings} setSettings={setSettings} />}
           {activeTab === "local" && <SettingsLocal t={t} />}
-          {activeTab === "instances" && <SettingsInstances t={t} />}
+          {activeTab === "instances" && <SettingsInstances t={t} settings={settings} setSettings={setSettings} />}
           {activeTab === "privacy" && <SettingsPrivacy t={t} settings={settings} setSettings={setSettings} />}
           {activeTab === "advanced" && <SettingsAdvanced t={t} settings={settings} setSettings={setSettings} />}
         </div>
