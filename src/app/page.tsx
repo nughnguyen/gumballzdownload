@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,8 @@ import {
   X, FileVideo, CheckCircle2, 
   ArrowRight, Loader2, AlertCircle, Music, Download,
   Copy, Share2, Star, UserPlus, Shield, Globe,
-  ClipboardPaste, Image as ImageIcon, Film, Headphones
+  ClipboardPaste, Image as ImageIcon, Film, Headphones,
+  Upload
 } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { translations } from "@/lib/translations";
@@ -316,6 +317,47 @@ export default function MediaDownloader() {
     };
   };
 
+  // Remux State
+  const [remuxFile, setRemuxFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setRemuxFile(e.target.files[0]);
+      toast.success("File selected!");
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setRemuxFile(null);
+    setUploadProgress(0);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleUploadRemux = () => {
+    if (!remuxFile) return;
+    
+    setIsUploading(true);
+    setUploadProgress(0);
+    
+    // Simulate upload
+    const interval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setIsUploading(false);
+          toast.success("File uploaded successfully! (Simulation)");
+          return 100;
+        }
+        return prev + 5;
+      });
+    }, 100);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 font-sans transition-colors duration-300 flex flex-col selection:bg-blue-500/30">
       {/* Navbar */}
@@ -408,24 +450,27 @@ export default function MediaDownloader() {
 
         {currentView === "home" && (
           <div className="max-w-4xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out">
-            <div className="text-center space-y-6 mb-16 relative">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 blur-[100px] rounded-full -z-10 pointer-events-none" />
+            <div className="text-center space-y-8 mb-20 relative">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-gradient-to-r from-blue-500/30 via-purple-500/30 to-pink-500/30 blur-[120px] rounded-full -z-10 pointer-events-none animate-pulse" />
               
-              <h1 className="text-6xl md:text-8xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 pb-4 drop-shadow-sm">
-                GumballZ
-              </h1>
-              <p className="text-slate-600 dark:text-slate-300 text-xl md:text-2xl max-w-2xl mx-auto font-medium leading-relaxed">
-                {t.about.desc}
-              </p>
+              <div className="space-y-4">
+                <h1 className="text-7xl md:text-9xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-violet-600 to-pink-600 pb-4 drop-shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                  GumballZ
+                </h1>
+                <p className="text-slate-600 dark:text-slate-300 text-xl md:text-3xl max-w-3xl mx-auto font-medium leading-relaxed animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-200">
+                  {t.about.desc}
+                </p>
+              </div>
             </div>
 
-            <Card className="border-0 shadow-2xl shadow-blue-500/10 bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl ring-1 ring-white/20 dark:ring-slate-800/50 overflow-hidden rounded-3xl">
-              <CardContent className="p-3">
+            <Card className="border-0 shadow-2xl shadow-blue-500/10 bg-white/40 dark:bg-slate-900/40 backdrop-blur-3xl ring-1 ring-white/50 dark:ring-slate-700/50 overflow-hidden rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+              <CardContent className="p-4">
                 <div className="flex gap-3 relative group">
-                  <div className="relative flex-1">
+                  <div className="relative flex-1 group/input">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-pink-500 rounded-2xl opacity-0 group-focus-within/input:opacity-50 transition duration-500 blur-md" />
                     <Input 
                       placeholder={t.home.placeholder}
-                      className="h-16 text-lg bg-white/50 dark:bg-slate-950/50 border-0 focus-visible:ring-2 focus-visible:ring-blue-500/50 px-6 rounded-2xl shadow-inner transition-all duration-300 pr-14"
+                      className="relative h-20 text-xl bg-white dark:bg-slate-950 border-0 focus-visible:ring-0 px-8 rounded-2xl shadow-sm transition-all duration-300 pr-16 placeholder:text-slate-400"
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
@@ -433,23 +478,23 @@ export default function MediaDownloader() {
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 h-14 w-14 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                       onClick={handlePaste}
                       title="Paste from clipboard"
                     >
-                      <ClipboardPaste className="h-5 w-5" />
+                      <ClipboardPaste className="h-6 w-6" />
                     </Button>
                   </div>
                   <Button 
                     size="lg" 
-                    className="h-16 px-10 text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+                    className="h-20 px-12 text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl shadow-xl shadow-blue-500/20 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
                     onClick={handleAnalyze}
                     disabled={status === "analyzing" || !input}
                   >
                     {status === "analyzing" ? (
-                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <Loader2 className="h-8 w-8 animate-spin" />
                     ) : (
-                      <ArrowRight className="h-6 w-6" />
+                      <ArrowRight className="h-8 w-8" />
                     )}
                   </Button>
                 </div>
@@ -562,26 +607,96 @@ export default function MediaDownloader() {
         )}
 
         {currentView === "remux" && (
-          <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-            <div className="text-center space-y-4 mb-12">
-              <h2 className="text-4xl md:text-5xl font-black tracking-tight">{t.remux.title}</h2>
-              <p className="text-slate-500 dark:text-slate-400 text-lg">Fix media containers quickly and easily.</p>
+          <div className="max-w-3xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <div className="text-center space-y-6 mb-12">
+              <h2 className="text-5xl md:text-6xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-500 to-blue-500 pb-2">
+                {t.remux.title}
+              </h2>
+              <p className="text-slate-600 dark:text-slate-300 text-xl max-w-xl mx-auto font-medium">
+                Fix media containers quickly and easily.
+              </p>
             </div>
 
-            <Card className="border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group rounded-3xl">
-              <CardContent className="flex flex-col items-center justify-center py-20 text-center space-y-6">
-                <div className="h-24 w-24 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-500">
-                  <RefreshCw className="h-10 w-10 text-blue-500 group-hover:rotate-180 transition-transform duration-700" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="font-bold text-2xl">{t.remux.drop}</h3>
-                  <p className="text-slate-500">{t.remux.drag}</p>
-                </div>
-                <div className="flex gap-3 text-xs font-bold text-slate-400 uppercase tracking-widest">
-                  <span className="bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg shadow-sm">mp4</span>
-                  <span className="bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg shadow-sm">mkv</span>
-                  <span className="bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg shadow-sm">webm</span>
-                </div>
+            <Card className="border-0 shadow-2xl shadow-cyan-500/10 bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl ring-1 ring-white/20 dark:ring-slate-800/50 overflow-hidden rounded-[2rem]">
+              <CardContent className="p-8">
+                {!remuxFile ? (
+                  <div 
+                    className="border-3 border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 cursor-pointer group rounded-3xl flex flex-col items-center justify-center py-24 text-center space-y-6"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      className="hidden" 
+                      onChange={handleFileSelect}
+                      accept="video/*,audio/*"
+                    />
+                    <div className="h-28 w-28 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 group-hover:shadow-blue-500/20 transition-all duration-500">
+                      <Upload className="h-12 w-12 text-blue-500 group-hover:-translate-y-1 transition-transform duration-500" />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="font-bold text-2xl text-slate-700 dark:text-slate-200">{t.remux.drop}</h3>
+                      <p className="text-slate-500 font-medium">{t.remux.drag}</p>
+                    </div>
+                    <div className="flex gap-3 text-xs font-bold text-slate-400 uppercase tracking-widest pt-4">
+                      <span className="bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">mp4</span>
+                      <span className="bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">mkv</span>
+                      <span className="bg-white dark:bg-slate-800 px-4 py-2 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">webm</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
+                    <div className="flex items-center gap-6 bg-white dark:bg-slate-950 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+                      <div className="h-20 w-20 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                        <FileVideo className="h-10 w-10 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-xl truncate text-slate-900 dark:text-slate-100">{remuxFile.name}</h3>
+                        <p className="text-slate-500 font-medium mt-1">{(remuxFile.size / (1024 * 1024)).toFixed(2)} MB</p>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={handleRemoveFile}
+                        className="h-12 w-12 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        disabled={isUploading}
+                      >
+                        <X className="h-6 w-6" />
+                      </Button>
+                    </div>
+
+                    {isUploading && (
+                      <div className="space-y-3">
+                        <div className="flex justify-between text-sm font-bold text-slate-500">
+                          <span>Uploading...</span>
+                          <span>{uploadProgress}%</span>
+                        </div>
+                        <Progress value={uploadProgress} className="h-4 rounded-full bg-slate-100 dark:bg-slate-800" indicatorClassName="bg-gradient-to-r from-cyan-500 to-blue-500" />
+                      </div>
+                    )}
+
+                    <div className="flex gap-4">
+                      <Button 
+                        size="lg" 
+                        className="flex-1 h-16 text-lg font-bold bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-2xl shadow-xl shadow-cyan-500/20 hover:shadow-cyan-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+                        onClick={handleUploadRemux}
+                        disabled={isUploading}
+                      >
+                        {isUploading ? (
+                          <>
+                            <Loader2 className="mr-3 h-6 w-6 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="mr-3 h-6 w-6" />
+                            Start Remux
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
